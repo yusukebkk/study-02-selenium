@@ -23,7 +23,7 @@ def set_driver(driver_path, headless_flg):
     options.add_argument('--incognito')          # シークレットモードの設定を付与
 
     # ChromeのWebDriverオブジェクトを作成する。
-    return Chrome(executable_path=os.getcwd() + "\\" + driver_path, options=options)
+    return Chrome(executable_path=os.getcwd() + "/" + driver_path, options=options)
 
 # main処理
 
@@ -49,34 +49,15 @@ def main():
 
     # ページ終了まで繰り返し取得
     exp_name_list = []
-    while True:
-        # 検索結果の一番上の会社名を取得
-        name_list = driver.find_elements_by_class_name("cassetteRecruit__name")
-        copy_list = driver.find_elements_by_class_name("cassetteRecruit__copy")
-        status_list = driver.find_elements_by_class_name(
-            "labelEmploymentStatus")
-        # 1ページ分繰り返し
-        print("{},{},{}".format(len(copy_list), len(status_list), len(name_list)))
-        for name, copy, status in zip(name_list, copy_list, status_list):
-            try:
-                exp_name_list.append(name.text)
-                print(copy.text)
-                print(status.text)
-            except:
-                print("情報取得エラー")
-                pass
+    # 検索結果の一番上の会社名を取得
+    name_list = driver.find_elements_by_class_name("cassetteRecruit__name")
 
-        # 次のページボタンがあればクリックなければ終了
-        next_page = driver.find_elements_by_class_name("iconFont--arrowLeft")
-        if len(next_page) >= 1:
-            next_page_link = next_page[0].get_attribute("href")
-            driver.get(next_page_link)
-        else:
-            print("最終ページです。終了します。")
-            break
-
-    df = pd.DataFrame(exp_name_list)
-    df.to_csv("./test.csv", encoding="utf-8-sig")
+    # 1ページ分繰り返し
+    print(len(name_list))
+    for name in name_list:
+        exp_name_list.append(name.text)
+        print(name.text)
+        
 
 
 # 直接起動された場合はmain()を起動(モジュールとして呼び出された場合は起動しないようにするため)

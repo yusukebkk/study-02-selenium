@@ -31,7 +31,10 @@ def set_driver(driver_path, headless_flg):
 def main():
     search_keyword = "高収入"
     # driverを起動
-    driver = set_driver("chromedriver.exe", False)
+    if os.name == 'nt': #Windows
+        driver = set_driver("chromedriver.exe", False)
+    elif os.name == 'posix': #Mac
+        driver = set_driver("chromedriver", False)
     # Webサイトを開く
     driver.get("https://tenshoku.mynavi.jp/")
     time.sleep(5)

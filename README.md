@@ -3,6 +3,8 @@
 説明動画：https://youtu.be/vNJ5DcrdvhM<br>
 Seleniumの基本：https://techacademy.jp/magazine/28392<br>
 Seleniumの応用：https://tanuhack.com/selenium/#URL<br>
+Pandasの基本：https://note.nkmk.me/pandas/<br>
+ログ出力(テキストファイル出力)：https://note.nkmk.me/python-file-io-open-with/<br>
 
 サンプルコードは、検索結果の１番上の会社名を取得するようになっています。
 下記の課題に従って、レベルアップさせてみましょう。
@@ -31,4 +33,6 @@ for文を使って、１ページ内の３つ程度の項目（会社名、年�
 
 ## 課題７　難易度★★☆☆☆
 処理の経過が分かりやすいようにログファイルを出力してみましょう<br>
+ログファイルとは：ツールがいつどのように動作したかを後から確認するために重要なテキストファイルです。
+ライブラリを用いることもできますが、テキストファイルを出力する処理で簡単に実現できるので、試してみましょう。
 (今何件目、エラー内容、等を表示)

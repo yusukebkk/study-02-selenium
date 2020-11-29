@@ -45,7 +45,7 @@ def main():
         time.sleep(5)
         # ポップアップを閉じる
         driver.execute_script('document.querySelector(".karte-close").click()')
-    exception:
+    except:
         pass
     
     # 検索窓に入力

@@ -73,7 +73,7 @@ def main():
 
     #求人の件数
     num_jobs = int(driver.find_element_by_xpath("//p[@class='result__num']/em").text)
-    add_log(str(num_jobs)+"件の求人が見つかりました")
+    add_log(f"{num_jobs}件の求人が見つかりました")
     #ページを取得する回数
     search_repeat_num = num_jobs//50 +1
 
@@ -84,15 +84,15 @@ def main():
             url = url_before+url_after
         #pgを入れる
         else:
-            url = url_before + "pg" + str(i+1) + url_after
+            url = f"{url_before}pg{i+1}{url_after}"
         try:
             driver.get(url)
             time.sleep(5)
             #ページ内の全情報を取得
             info_list = driver.find_elements_by_xpath("//div[@class='container__inner']/div[contains(@class,'cassetteRecruit')]")
-            add_log(str(i+1)+"/"+str(search_repeat_num)+"ページ目のデータの取得に成功しました")
+            add_log(f"{i+1}/{search_repeat_num}ページ目のデータの取得に成功しました")
         except:
-            add_log(str(i+1)+"/"+str(search_repeat_num)+"ページ目のデータの取得に失敗しました")
+            add_log(f"{i+1}/{search_repeat_num}ページ目のデータの取得に失敗しました")
             pass
         #詳細情報を取得してデータフレームを作成
         try:
@@ -121,42 +121,42 @@ def get_info(info_list,df,count):
             company_name = company_name_copy[0]
             copy_sub = "|".join(company_name_copy[1:])
         except:
-            add_log(str(count) + "件目の会社名と短いコピーのデータが取得できませんでした")
+            add_log(f"{count}件目の会社名と短いコピーのデータが取得できませんでした")
             pass
         #メインコピー
         try:
             copy_main = info.find_element_by_xpath(".//p[contains(@class,'cassetteRecruit')]/a").text
         except:
-            add_log(str(count) + "件目のメインコピーのデータが取得できませんでした")
+            add_log(f"{count}件目のメインコピーのデータが取得できませんでした")
             pass
         #表の中の項目
         try:
             job_details = info.find_element_by_xpath(".//th[text() = '仕事内容']/following-sibling::td").text
         except:
-            add_log(str(count) + "件目の仕事内容のデータが取得できませんでした")
+            add_log(f"{count}件目の仕事内容のデータが取得できませんでした")
             pass
         try:
             target = info.find_element_by_xpath(".//th[text() = '対象となる方']/following-sibling::td").text
         except:
-            add_log(str(count) + "件目の対象となる方のデータが取得できませんでした")
+            add_log(f"{count}件目の対象となる方のデータが取得できませんでした")
             pass
         try:
             work_place = info.find_element_by_xpath(".//th[text() = '勤務地']/following-sibling::td").text
         except:
-            add_log(str(count) + "件目の勤務地のデータが取得できませんでした")
+            add_log(f"{count}件目の勤務地のデータが取得できませんでした")
             pass
         try:
             monthly_salary = info.find_element_by_xpath(".//th[text() = '給与']/following-sibling::td").text
         except:
-            add_log(str(count) + "件目の給与のデータが取得できませんでした")
+            add_log(f"{count}件目の給与のデータが取得できませんでした")
             pass
         try:
             yearly_salary = info.find_element_by_xpath(".//th[text() = '初年度年収']/following-sibling::td").text
         except:
-            add_log(str(count) + "件目の初年度年収のデータが取得できませんでした")
+            add_log(f"{count}件目のの初年度年収のデータが取得できませんでした")
             pass
         df.loc[count] = [company_name, copy_sub, copy_main,job_details,target,work_place,monthly_salary,yearly_salary]
-        add_log(str(count) + "件目の登録が終わりました")
+        add_log(f"{count}件目の登録が終わりました")
     return [df,count]
     
 

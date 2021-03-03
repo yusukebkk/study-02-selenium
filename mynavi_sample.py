@@ -1,12 +1,15 @@
 import os
+from selenium import webdriver
 from selenium.webdriver import Chrome, ChromeOptions
 import time
 import pandas as pd
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Chromeを起動する関数
 
 
-def set_driver(driver_path, headless_flg):
+
+def set_driver(headless_flg):
     # Chromeドライバーの読み込み
     options = ChromeOptions()
 
@@ -23,18 +26,20 @@ def set_driver(driver_path, headless_flg):
     options.add_argument('--incognito')          # シークレットモードの設定を付与
 
     # ChromeのWebDriverオブジェクトを作成する。
-    return Chrome(executable_path=os.getcwd() + "/" + driver_path, options=options)
+    #return Chrome(executable_path=os.getcwd() + "/" + driver_path, options=options)
+    return webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
+#logの処理
+def add_log(message):
+    with open("log.txt", mode='a') as f:
+        f.write(message+"\n")
+
 
 # main処理
-
-
 def main():
-    search_keyword = "高収入"
+    search_keyword = input("キーワードを入力してください\n>>>")
     # driverを起動
-    if os.name == 'nt': #Windows
-        driver = set_driver("chromedriver.exe", False)
-    elif os.name == 'posix': #Mac
-        driver = set_driver("chromedriver", False)
+    driver = set_driver(False)
     # Webサイトを開く
     driver.get("https://tenshoku.mynavi.jp/")
     time.sleep(5)
@@ -49,23 +54,111 @@ def main():
         pass
     
     # 検索窓に入力
-    driver.find_element_by_class_name(
-        "topSearch__text").send_keys(search_keyword)
+    driver.find_element_by_class_name("topSearch__text").send_keys(search_keyword)
     # 検索ボタンクリック
     driver.find_element_by_class_name("topSearch__button").click()
 
+    #現在のURLを取得
+    time.sleep(5)
+    current_url = driver.current_url
+    current_url = current_url.split("?")
+    url_before = current_url[0]
+    url_after ="?"+current_url[1]
+
+    name =['会社名','サブコピー','メインコピー','仕事内容','対象となる方','勤務地','給与','初年度年収']
+    df = pd.DataFrame(columns=name)
+
+    #求人のIDのカウント
+    count = 0
+
+    #求人の件数
+    num_jobs = int(driver.find_element_by_xpath("//p[@class='result__num']/em").text)
+    add_log(str(num_jobs)+"件の求人が見つかりました")
+    #ページを取得する回数
+    search_repeat_num = num_jobs//50 +1
+
     # ページ終了まで繰り返し取得
-    exp_name_list = []
-    # 検索結果の一番上の会社名を取得
-    name_list = driver.find_elements_by_class_name("cassetteRecruit__name")
-
-    # 1ページ分繰り返し
-    print(len(name_list))
-    for name in name_list:
-        exp_name_list.append(name.text)
-        print(name.text)
+    for i in range (search_repeat_num):
+        #pgを入れない
+        if i == 0:
+            url = url_before+url_after
+        #pgを入れる
+        else:
+            url = url_before + "pg" + str(i+1) + url_after
+        try:
+            driver.get(url)
+            time.sleep(5)
+            #ページ内の全情報を取得
+            info_list = driver.find_elements_by_xpath("//div[@class='container__inner']/div[contains(@class,'cassetteRecruit')]")
+            add_log(str(i+1)+"/"+str(search_repeat_num)+"ページ目のデータの取得に成功しました")
+        except:
+            add_log(str(i+1)+"/"+str(search_repeat_num)+"ページ目のデータの取得に失敗しました")
+            pass
+        #詳細情報を取得してデータフレームを作成
+        try:
+            df,count = get_info(info_list,df,count)
+        except:
+            pass
+    #CSVファイルにcp932で書き込む（エンコードできない文字は無視する）
+    with open("result.csv", mode="w", encoding="cp932", errors="ignore") as f:
+        #pandasでファイルオブジェクトに書き込む
+        df.to_csv(f)
         
+    
 
+    
+def get_info(info_list,df,count):
+    for info in info_list:
+        #IDを一つ増やす
+        count += 1
+        #各項目の値を初期化
+        company_name=copy_sub=copy_main=job_details=target=work_place=monthly_salary=yearly_salary= ""
+        #会社名+短いコピー
+        try:
+            company_name_copy = info.find_element_by_tag_name("h3").text
+            #会社名と短いコピーに分割
+            company_name_copy = company_name_copy.split('|')
+            company_name = company_name_copy[0]
+            copy_sub = "|".join(company_name_copy[1:])
+        except:
+            add_log(str(count) + "件目の会社名と短いコピーのデータが取得できませんでした")
+            pass
+        #メインコピー
+        try:
+            copy_main = info.find_element_by_xpath(".//p[contains(@class,'cassetteRecruit')]/a").text
+        except:
+            add_log(str(count) + "件目のメインコピーのデータが取得できませんでした")
+            pass
+        #表の中の項目
+        try:
+            job_details = info.find_element_by_xpath(".//th[text() = '仕事内容']/following-sibling::td").text
+        except:
+            add_log(str(count) + "件目の仕事内容のデータが取得できませんでした")
+            pass
+        try:
+            target = info.find_element_by_xpath(".//th[text() = '対象となる方']/following-sibling::td").text
+        except:
+            add_log(str(count) + "件目の対象となる方のデータが取得できませんでした")
+            pass
+        try:
+            work_place = info.find_element_by_xpath(".//th[text() = '勤務地']/following-sibling::td").text
+        except:
+            add_log(str(count) + "件目の勤務地のデータが取得できませんでした")
+            pass
+        try:
+            monthly_salary = info.find_element_by_xpath(".//th[text() = '給与']/following-sibling::td").text
+        except:
+            add_log(str(count) + "件目の給与のデータが取得できませんでした")
+            pass
+        try:
+            yearly_salary = info.find_element_by_xpath(".//th[text() = '初年度年収']/following-sibling::td").text
+        except:
+            add_log(str(count) + "件目の初年度年収のデータが取得できませんでした")
+            pass
+        df.loc[count] = [company_name, copy_sub, copy_main,job_details,target,work_place,monthly_salary,yearly_salary]
+        add_log(str(count) + "件目の登録が終わりました")
+    return [df,count]
+    
 
 # 直接起動された場合はmain()を起動(モジュールとして呼び出された場合は起動しないようにするため)
 if __name__ == "__main__":
